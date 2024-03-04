@@ -102,10 +102,8 @@ func (s *Broker) handle(conn net.Conn) error {
 	remoteAddr := conn.RemoteAddr().String()
 	fmt.Println("Client connected from " + remoteAddr)
 
-	// Create a buffer to hold the incoming data
 	buf := make([]byte, 1296)
 
-	// Read the incoming data into the buffer
 	_, err := conn.Read(buf)
 	if err != nil {
 		return sendError(conn, "Error reading request"+err.Error())
@@ -133,12 +131,10 @@ func (s *Broker) handle(conn net.Conn) error {
 		fmt.Println("WORKER: Received a Set message")
 		s.QueryChan <- m
 	}
-	// A minimal HTTP response
 	response := "HTTP/1.1 200 OK\r\n" +
 		"Content-Length: 0\r\n" +
 		"\r\n"
 
-	// Write the response to the connection
 	_, err = conn.Write([]byte(response))
 	if err != nil {
 		fmt.Println("Error writing to connection:", err)
