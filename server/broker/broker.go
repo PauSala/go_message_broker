@@ -38,6 +38,8 @@ func (s *Broker) MessageListener() {
 		switch kind {
 		case protocol.Pub:
 			fmt.Println("CHANNEL: Received a Pub message")
+			fmt.Println(m.(*protocol.PubMessage).Topic)
+			fmt.Println(m.(*protocol.PubMessage).Data)
 			queue := s.Queues[m.(*protocol.PubMessage).Topic]
 			if queue == nil {
 				fmt.Println("CHANNEL: Queue not found")
@@ -60,7 +62,6 @@ func (s *Broker) MessageListener() {
 			s.ResponseChan <- data
 		case protocol.Set:
 			fmt.Println("CHANNEL: Received a Set message")
-			fmt.Println(m.(*protocol.SetMessage).Topic)
 			queue := s.Queues[m.(*protocol.SetMessage).Topic]
 			if queue == nil {
 				s.AddQueue(m.(*protocol.SetMessage).Topic)
@@ -75,6 +76,20 @@ func (s *Broker) MessageSender() {
 	for msg := range s.ResponseChan {
 		fmt.Println("Sending response to client")
 		fmt.Println(msg)
+		// Connect to the TCP server
+		conn, err := net.Dial("tcp", "localhost:3002")
+		if err != nil {
+			println("Failed to connect to TCP server" + err.Error())
+			return
+		}
+		defer conn.Close()
+
+		// Send the HTTP request data to the TCP server
+		message := []byte(msg) // Convert string to byte slice
+		if _, err := conn.Write(message); err != nil {
+			println("Failed to send data to TCP server" + err.Error())
+			return
+		}
 	}
 }
 

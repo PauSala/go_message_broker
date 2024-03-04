@@ -1,7 +1,6 @@
 package messages
 
 import (
-	"fmt"
 	ds "server/data_structures"
 )
 
@@ -20,7 +19,6 @@ func NewMessageQueue(id string, cap int) *MessageQueue {
 }
 
 func (q *MessageQueue) Push(m string) error {
-	fmt.Println("Pushing message to queue: " + m)
 	return q.Queue.Enqueue(m)
 }
 

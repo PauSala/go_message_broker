@@ -10,7 +10,7 @@ func Build(query, uuid string) []byte {
 	command := args[0]
 	switch command {
 	case "PUB":
-		msg := strings.Join(args[1:], " ")
+		msg := strings.Join(args[2:], " ")
 		return PubMessage(args[1], msg)
 	case "SUB":
 		return SubMessage(args[1], uuid)
