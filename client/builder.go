@@ -8,7 +8,6 @@ import (
 func Build(query, uuid string) []byte {
 	args := strings.Fields(query)
 	command := args[0]
-
 	switch command {
 	case "PUB":
 		msg := strings.Join(args[1:], " ")
