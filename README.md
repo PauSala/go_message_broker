@@ -1,7 +1,7 @@
-# go_message_broker
+# go message broker
 A toy message_broker implemented in GO just for fun
 ## Broker Package
-This package provides functionality for a broker server that handles messaging using a custom protocol over TCP.
+This package provides functionality for a broker server that handles messaging using a custom protocol over TCP.  
 It uses a worker pool to handle conections and implements topics as message queues. 
 
 ### Overview
@@ -16,8 +16,8 @@ A custom naive, highly insecure, no error tolerant  protocol
 
 ## Client Package
 A TCP/HTTP client to send packages to the broker
-- Reads  POST
+- Reads an HTTP POST
 - Parses the body to a valid message
-- Sends it to the broker 
+- Sends it to the broker via TCP
 
   
