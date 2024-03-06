@@ -5,15 +5,15 @@ import (
 	"net"
 	messages "server/message"
 	"server/protocol"
+	"strings"
 )
 
 type Broker struct {
-	Addr         string
-	Dispatcher   Dispatcher
-	Parser       protocol.Parser
-	Queues       map[string]*messages.MessageQueue
-	QueryChan    chan protocol.Message
-	ResponseChan chan string
+	Addr       string
+	Dispatcher Dispatcher
+	Parser     protocol.Parser
+	Queues     map[string]*messages.MessageQueue
+	QueryChan  chan protocol.Message
 }
 
 type Handler func(conn net.Conn) error
@@ -29,7 +29,9 @@ func (s *Job) Process() error {
 
 func (s *Broker) AddQueue(name string) {
 	fmt.Println("Adding queue")
-	s.Queues[name] = messages.NewMessageQueue(name, 10)
+	q := messages.NewMessageQueue(name, 10)
+	q.Listen()
+	s.Queues[name] = q
 }
 
 func (s *Broker) MessageListener() {
@@ -45,7 +47,7 @@ func (s *Broker) MessageListener() {
 				fmt.Println("CHANNEL: Queue not found")
 				break
 			}
-			queue.Push(m.(*protocol.PubMessage).Data)
+			queue.PushC <- m.(*protocol.PubMessage).Data
 		case protocol.Sub:
 			fmt.Println("CHANNEL: Received a Sub message")
 			queue := s.Queues[m.(*protocol.SubMessage).Topic]
@@ -53,13 +55,12 @@ func (s *Broker) MessageListener() {
 				fmt.Println("CHANNEL: Queue not found")
 				break
 			}
-			data, err := queue.Pull()
-			if err != nil {
-				fmt.Println("CHANNEL: Error pulling data from queue: " + err.Error())
-				break
+			ip := net.ParseIP(m.(*protocol.SubMessage).SubIp)
+			if queue.SubC != nil {
+				queue.SubC <- &messages.Subscriber{
+					Id: m.(*protocol.SubMessage).SubId,
+					Ip: net.TCPAddr{IP: ip, Port: 3002}}
 			}
-			fmt.Println("Data: " + data)
-			s.ResponseChan <- data
 		case protocol.Set:
 			fmt.Println("CHANNEL: Received a Set message")
 			queue := s.Queues[m.(*protocol.SetMessage).Topic]
@@ -68,27 +69,14 @@ func (s *Broker) MessageListener() {
 				break
 			}
 			fmt.Println("CHANNEL: Queue already exists")
-		}
-	}
-}
-
-func (s *Broker) MessageSender() {
-	for msg := range s.ResponseChan {
-		fmt.Println("Sending response to client")
-		fmt.Println(msg)
-		// Connect to the TCP server
-		conn, err := net.Dial("tcp", "localhost:3002")
-		if err != nil {
-			println("Failed to connect to TCP server" + err.Error())
-			return
-		}
-		defer conn.Close()
-
-		// Send the HTTP request data to the TCP server
-		message := []byte(msg) // Convert string to byte slice
-		if _, err := conn.Write(message); err != nil {
-			println("Failed to send data to TCP server" + err.Error())
-			return
+		case protocol.Pull:
+			fmt.Println("CHANNEL: Recieved a Pull message")
+			queue := s.Queues[m.(*protocol.PullMessage).Topic]
+			if queue == nil {
+				fmt.Println("CHANNEL: Queue not found")
+				break
+			}
+			queue.PullC <- struct{}{}
 		}
 	}
 }
@@ -96,8 +84,6 @@ func (s *Broker) MessageSender() {
 func (s *Broker) Listen() error {
 	listener, err := net.Listen("tcp", s.Addr)
 	go s.MessageListener()
-	go s.MessageSender()
-	s.ResponseChan <- "Some test data"
 	if err != nil {
 		return err
 	}
@@ -141,6 +127,8 @@ func (s *Broker) handle(conn net.Conn) error {
 		s.QueryChan <- m
 	case protocol.Sub:
 		fmt.Println("WORKER: Received a Sub message")
+		m := m.(*protocol.SubMessage)
+		m.SubIp = strings.Split(remoteAddr, ":")[0]
 		s.QueryChan <- m
 	case protocol.Set:
 		fmt.Println("WORKER: Received a Set message")

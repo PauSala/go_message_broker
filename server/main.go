@@ -5,6 +5,7 @@ import (
 	"server/broker"
 	m "server/message"
 	"server/protocol"
+	"time"
 )
 
 func main() {
@@ -14,11 +15,20 @@ func main() {
 			"DispatcherName",
 			broker.SetMaxWorkers(10),
 		),
-		Parser:       protocol.MessageParser,
-		QueryChan:    make(chan protocol.Message, 10),
-		ResponseChan: make(chan string, 10),
-		Queues:       make(map[string]*m.MessageQueue),
+		Parser:    protocol.MessageParser,
+		QueryChan: make(chan protocol.Message, 10),
+		Queues:    make(map[string]*m.MessageQueue),
 	}
+	ticker := time.Tick(5 * time.Second)
+
+	go func() {
+		for range ticker {
+			for _, q := range s.Queues {
+				q.PullC <- struct{}{}
+			}
+		}
+	}()
+
 	if err := s.Listen(); err != nil {
 		fmt.Println("Server error:", err)
 	}

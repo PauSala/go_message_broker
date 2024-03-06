@@ -37,6 +37,7 @@ func listen() error {
 func main() {
 	serverID := uuid.New()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Received request")
 		// Read the HTTP request body
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -54,6 +55,7 @@ func main() {
 
 		// Send the HTTP request data to the TCP server
 		message := string(data)
+		fmt.Println(message)
 		parsed := Build(message, serverID.String())
 		if _, err := conn.Write(parsed); err != nil {
 			http.Error(w, "Failed to send data to TCP server", http.StatusInternalServerError)
