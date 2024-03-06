@@ -10,6 +10,7 @@ The Broker struct manages incoming connections, message dispatching, and message
 - Each request is managed by a worker, which parses the message and sends it to broker's query channel.
 - The query channel listener gets the queue associated with the topic and sends a message to its corresponding channel (pubC, pullC, subC).
 - Finally, the queue listener handles the message (pushing to the queue, adding a subscriber or pulling and sending messages to subscribers)
+- The broker has a timer which sends messages to queues in order to pull data periodically
 
 ### Protocol
 A custom naive, highly insecure, no error tolerant  protocol
