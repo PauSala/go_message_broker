@@ -12,7 +12,7 @@ The Broker struct manages incoming connections, message dispatching, and message
 - Finally, the queue listener handles the message (pushing to the queue, adding a subscriber or pulling and sending messages to subscribers)
 - The broker has a timer which sends messages to queues in order to pull data periodically
 
-### Protocol
+### Custom TCP Protocol
 A custom naive, highly insecure, no error tolerant  protocol
 #### Actions
 - Set: sets a topic
