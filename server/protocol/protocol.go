@@ -60,6 +60,7 @@ const (
 	Pub MessageKind = iota
 	Sub
 	Set
+	Pull
 )
 
 func (mk MessageKind) String() string {
@@ -70,6 +71,8 @@ func (mk MessageKind) String() string {
 		return "Sub"
 	case Set:
 		return "Set"
+	case Pull:
+		return "Pull"
 	default:
 		return "Unknown"
 	}
@@ -90,6 +93,7 @@ func (m *PubMessage) Kind() MessageKind {
 
 type SubMessage struct {
 	SubId string
+	SubIp string
 	Topic string
 }
 
@@ -103,6 +107,14 @@ type SetMessage struct {
 
 func (m *SetMessage) Kind() MessageKind {
 	return Set
+}
+
+type PullMessage struct {
+	Topic string
+}
+
+func (m *PullMessage) Kind() MessageKind {
+	return Pull
 }
 
 type Parser func(message [1296]byte) (Message, error)
